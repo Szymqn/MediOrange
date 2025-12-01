@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../main.dart';
 
 class MedAssistHomePage extends StatefulWidget {
@@ -240,10 +241,12 @@ Opieraj swoje odpowiedzi na standardowych protokołach klinicznych (takich jak w
                 bottomLeft: !isUser ? Radius.zero : null,
               ),
             ),
-            child: Text(
-              msg['content']!,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: isUser ? AppColors.textOnPrimary : theme.colorScheme.onSecondaryContainer,
+            child: MarkdownBody(
+              data: msg['content']!,
+              styleSheet: MarkdownStyleSheet(
+                p: theme.textTheme.bodyLarge?.copyWith(
+                  color: isUser ? AppColors.textOnPrimary : theme.colorScheme.onSecondaryContainer,
+                ),
               ),
             ),
           ),
