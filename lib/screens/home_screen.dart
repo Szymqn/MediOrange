@@ -1,0 +1,299 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import '../main.dart';
+
+class MedAssistHomePage extends StatefulWidget {
+  const MedAssistHomePage({super.key});
+
+  @override
+  State<MedAssistHomePage> createState() => _MedAssistHomePageState();
+}
+
+class _MedAssistHomePageState extends State<MedAssistHomePage> {
+  final TextEditingController _controller = TextEditingController();
+  final List<Map<String, String>> _messages = [];
+  final ScrollController _scrollController = ScrollController();
+  
+  late final GenerativeModel _model;
+  late final ChatSession _chat;
+  bool _isModelInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initGemini();
+  }
+
+  void _initGemini() {
+    try {
+      _model = GenerativeModel(
+        model: 'gemini-2.5-pro', 
+        apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
+        systemInstruction: Content.system('''
+Jesteś MedAssist, ekspertem w dziedzinie sztucznej inteligencji (AI) w dziedzinie asystentów procedur medycznych.
+Twoim celem jest dostarczanie dokładnych, profesjonalnych i bezpiecznych wytycznych klinicznych.
+Zawsze wyjaśniaj, że jesteś sztuczną inteligencją (AI), a nie zastępujesz lekarza.
+Jeśli zapytasz o tematy niezwiązane z medycyną, uprzejmie odmów.
+Opieraj swoje odpowiedzi na standardowych protokołach klinicznych (takich jak wytyczne WHO i CDC).
+'''),
+      );
+      _chat = _model.startChat();
+      _isModelInitialized = true;
+    } catch (e) {
+      debugPrint('Error initializing Gemini: $e');
+    }
+  }
+
+  Future<void> _sendMessage(String text) async {
+    if (text.trim().isEmpty) return;
+
+    setState(() {
+      _messages.add({'role': 'user', 'content': text});
+    });
+    _controller.clear();
+    _scrollToBottom();
+
+    if (!_isModelInitialized) {
+       setState(() {
+        _messages.add({
+          'role': 'assistant',
+          'content': "Error: API Key not set or model failed to initialize. Please check your code."
+        });
+      });
+      _scrollToBottom();
+      return;
+    }
+
+    try {
+      final response = await _chat.sendMessage(Content.text(text));
+      final responseText = response.text;
+
+      if (mounted && responseText != null) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'content': responseText
+          });
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'content': "Error: $e\n\n(If you see a 404, try changing the model name in the code to 'gemini-pro')"
+          });
+        });
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+            children: [
+              Image.asset(
+                "assets/icon/icon.png",
+                width: 32,
+                height: 32,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'MediOrange',
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+        ),
+        centerTitle: false,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _messages.isEmpty
+                ? _buildWelcomeView(theme)
+                : _buildChatList(theme),
+          ),
+          _buildInputArea(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeView(ThemeData theme) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: 
+                Image.asset(
+                  "assets/icon/icon.png",
+                  width: 120,
+                  height: 120,
+                ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Witamy w MediOrange',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Twój asystent AI wspomagający procedury medyczne i protokoły. Zapytaj o wytyczne kliniczne, najlepsze praktyki lub kroki proceduralne.',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            _buildSuggestionCard(
+              theme,
+              "Jak zmierzyć podstawowe parametry życiowe pacjenta?",
+              Icons.monitor_heart,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionCard(ThemeData theme, String text, IconData icon) {
+    return InkWell(
+      onTap: () => _sendMessage(text),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(12),
+          color: theme.colorScheme.surface,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: theme.colorScheme.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                text,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: theme.colorScheme.onSurfaceVariant),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatList(ThemeData theme) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(16),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final msg = _messages[index];
+        final isUser = msg['role'] == 'user';
+        return Align(
+          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+            decoration: BoxDecoration(
+              color: isUser ? AppColors.userMessage : theme.colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(20).copyWith(
+                bottomRight: isUser ? Radius.zero : null,
+                bottomLeft: !isUser ? Radius.zero : null,
+              ),
+            ),
+            child: Text(
+              msg['content']!,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: isUser ? AppColors.textOnPrimary : theme.colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInputArea(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: 'Zapytaj o procedurę medyczną...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: AppColors.inputBackground, // Custom input background color
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              onSubmitted: _sendMessage,
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: () => _sendMessage(_controller.text),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.sendButton, // Custom button background
+              foregroundColor: AppColors.textOnPrimary, // Custom icon color
+            ),
+            icon: const Icon(Icons.send),
+          ),
+        ],
+      ),
+    );
+  }
+}
