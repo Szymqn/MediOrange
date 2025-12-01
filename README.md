@@ -1,5 +1,9 @@
 # MediOrange 🍊
 
+<p align="center">
+  <img src="assets/icon/icon.png" width="150" alt="MediOrange Logo" />
+</p>
+
 MediOrange is an intelligent medical assistant application built with Flutter. It leverages Google's Gemini AI to provide healthcare professionals and users with quick access to clinical guidelines, medical protocols, and procedural information based on standard authorities like WHO and CDC.
 
 ## ✨ Features
@@ -50,6 +54,14 @@ Follow these steps to get the project up and running on your local machine.
    ```bash
    flutter run
    ```
+
+## Screenshots
+
+<p align="center">
+  <img src="media/screenshots/welcome.png" width="150" alt="MediOrange Welcome" />
+  <img src="media/screenshots/use_case.png" width="150" alt="MediOrange Welcome" />
+  <img src="media/screenshots/edge_case.png" width="150" alt="MediOrange Welcome" />
+</p>
 
 ## ⚠️ Disclaimer
 
