@@ -31,13 +31,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
       _model = GenerativeModel(
         model: 'gemini-2.5-pro', 
         apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
-        systemInstruction: Content.system('''
-Jesteś MedAssist, ekspertem w dziedzinie sztucznej inteligencji (AI) w dziedzinie asystentów procedur medycznych.
-Twoim celem jest dostarczanie dokładnych, profesjonalnych i bezpiecznych wytycznych klinicznych.
-Zawsze wyjaśniaj, że jesteś sztuczną inteligencją (AI), a nie zastępujesz lekarza.
-Jeśli zapytasz o tematy niezwiązane z medycyną, uprzejmie odmów.
-Opieraj swoje odpowiedzi na standardowych protokołach klinicznych (takich jak wytyczne WHO i CDC).
-'''),
+        systemInstruction: Content.system(dotenv.env['SYSTEM_PROMPT'] ?? "You are a helpful assistant."),
       );
       _chat = _model.startChat();
       _isModelInitialized = true;
