@@ -19,6 +19,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
   late final GenerativeModel _model;
   late final ChatSession _chat;
   bool _isModelInitialized = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
 
     setState(() {
       _messages.add({'role': 'user', 'content': text});
+      _isLoading = true;
     });
     _controller.clear();
     _scrollToBottom();
@@ -55,6 +57,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
           'role': 'assistant',
           'content': "Error: API Key not set or model failed to initialize. Please check your code."
         });
+        _isLoading = false;
       });
       _scrollToBottom();
       return;
@@ -70,6 +73,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
             'role': 'assistant',
             'content': responseText
           });
+          _isLoading = false;
         });
         _scrollToBottom();
       }
@@ -80,6 +84,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
             'role': 'assistant',
             'content': "Error: $e\n\n(If you see a 404, try changing the model name in the code to 'gemini-pro')"
           });
+          _isLoading = false;
         });
         _scrollToBottom();
       }
@@ -218,8 +223,32 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: _messages.length,
+      itemCount: _messages.length + (_isLoading ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == _messages.length && _isLoading) {
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(20).copyWith(
+                  bottomLeft: Radius.zero,
+                ),
+              ),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+          );
+        }
+
         final msg = _messages[index];
         final isUser = msg['role'] == 'user';
         return Align(
