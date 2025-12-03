@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -16,7 +17,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> _messages = [];
   final ScrollController _scrollController = ScrollController();
-  
+
   late final GenerativeModel _model;
   late final ChatSession _chat;
   bool _isModelInitialized = false;
@@ -31,9 +32,11 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
   void _initGemini() {
     try {
       _model = GenerativeModel(
-        model: 'gemini-2.5-pro', 
+        model: 'gemini-2.5-pro',
         apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
-        systemInstruction: Content.system(dotenv.env['SYSTEM_PROMPT'] ?? "You are a helpful assistant."),
+        systemInstruction: Content.system(
+          dotenv.env['SYSTEM_PROMPT'] ?? "You are a helpful assistant.",
+        ),
       );
       _chat = _model.startChat();
       _isModelInitialized = true;
@@ -53,10 +56,11 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
     _scrollToBottom();
 
     if (!_isModelInitialized) {
-       setState(() {
+      setState(() {
         _messages.add({
           'role': 'assistant',
-          'content': "Error: API Key not set or model failed to initialize. Please check your code."
+          'content':
+              "Error: API Key not set or model failed to initialize. Please check your code.",
         });
         _isLoading = false;
       });
@@ -70,10 +74,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
 
       if (mounted && responseText != null) {
         setState(() {
-          _messages.add({
-            'role': 'assistant',
-            'content': responseText
-          });
+          _messages.add({'role': 'assistant', 'content': responseText});
           _isLoading = false;
         });
         _scrollToBottom();
@@ -83,7 +84,8 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
         setState(() {
           _messages.add({
             'role': 'assistant',
-            'content': "Error: $e\n\n(If you see a 404, try changing the model name in the code to 'gemini-pro')"
+            'content':
+                "Error: $e\n\n(If you see a 404, try changing the model name in the code to 'gemini-pro')",
           });
           _isLoading = false;
         });
@@ -107,22 +109,20 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
-            children: [
-              Image.asset(
-                "assets/icon/icon.png",
-                width: 32,
-                height: 32,
+          children: [
+            Image.asset("assets/icon/icon.png", width: 32, height: 32),
+            const SizedBox(width: 8),
+            Text(
+              'MediOrange',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(width: 8),
-              Text(
-                'MediOrange',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
+            ),
+          ],
         ),
         centerTitle: false,
         elevation: 0,
@@ -155,12 +155,11 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
                 color: theme.colorScheme.primaryContainer.withAlpha(77),
                 shape: BoxShape.circle,
               ),
-              child: 
-                Image.asset(
-                  "assets/icon/icon.png",
-                  width: 120,
-                  height: 120,
-                ),
+              child: Image.asset(
+                "assets/icon/icon.png",
+                width: 120,
+                height: 120,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -207,13 +206,12 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
           children: [
             Icon(icon, color: theme.colorScheme.primary),
             const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                text,
-                style: theme.textTheme.bodyMedium,
-              ),
+            Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: theme.colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -234,9 +232,9 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(20).copyWith(
-                  bottomLeft: Radius.zero,
-                ),
+                borderRadius: BorderRadius.circular(
+                  20,
+                ).copyWith(bottomLeft: Radius.zero),
               ),
               child: SizedBox(
                 width: 24,
@@ -257,21 +255,56 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.8,
+            ),
             decoration: BoxDecoration(
-              color: isUser ? AppColors.userMessage : theme.colorScheme.secondaryContainer,
+              color: isUser
+                  ? AppColors.userMessage
+                  : theme.colorScheme.secondaryContainer,
               borderRadius: BorderRadius.circular(20).copyWith(
                 bottomRight: isUser ? Radius.zero : null,
                 bottomLeft: !isUser ? Radius.zero : null,
               ),
             ),
-            child: MarkdownBody(
-              data: msg['content']!,
-              styleSheet: MarkdownStyleSheet(
-                p: theme.textTheme.bodyLarge?.copyWith(
-                  color: isUser ? AppColors.textOnPrimary : theme.colorScheme.onSecondaryContainer,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                MarkdownBody(
+                  data: msg['content']!,
+                  styleSheet: MarkdownStyleSheet(
+                    p: theme.textTheme.bodyLarge?.copyWith(
+                      color: isUser
+                          ? AppColors.textOnPrimary
+                          : theme.colorScheme.onSecondaryContainer,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: msg['content']!));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Skopiowano do schowka'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Icon(
+                      Icons.copy,
+                      size: 14,
+                      color: isUser
+                          ? AppColors.textOnPrimary.withAlpha(179)
+                          : theme.colorScheme.onSecondaryContainer.withAlpha(
+                              179,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -304,8 +337,11 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: AppColors.inputBackground, // Custom input background color
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                fillColor: AppColors.inputBackground,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
               onSubmitted: _sendMessage,
             ),
@@ -314,8 +350,8 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
           IconButton.filled(
             onPressed: () => _sendMessage(_controller.text),
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.sendButton, // Custom button background
-              foregroundColor: AppColors.textOnPrimary, // Custom icon color
+              backgroundColor: AppColors.sendButton,
+              foregroundColor: AppColors.textOnPrimary,
             ),
             icon: const Icon(Icons.send),
           ),
