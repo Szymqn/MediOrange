@@ -42,6 +42,9 @@ app.*.map.json
 # Environment variables file
 .env
 
+# Data files
+/data/
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
