@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../main.dart';
 
 class MedAssistHomePage extends StatefulWidget {
@@ -151,7 +152,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.primaryContainer.withAlpha(77),
                 shape: BoxShape.circle,
               ),
               child: 
@@ -240,9 +241,9 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
               child: SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                child: LoadingAnimationWidget.waveDots(
                   color: theme.colorScheme.onSecondaryContainer,
+                  size: 24,
                 ),
               ),
             ),
@@ -285,7 +286,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(77),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
