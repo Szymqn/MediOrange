@@ -29,19 +29,62 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
     _initGemini();
   }
 
-  void _initGemini() {
+  Future<void> _initGemini() async {
     try {
+      String procedureText;
+      try {
+        procedureText = await rootBundle.loadString(
+          'data/KZ.2.I15 Ekspozycja Zawodowa - zasady postępowania.txt',
+        );
+      } catch (e) {
+        debugPrint(
+          "Warning: Procedure file not found. AI will run without it. Error: $e",
+        );
+        procedureText = "";
+      }
+
+      final basePrompt =
+          dotenv.env['SYSTEM_PROMPT'] ?? "You are a helpful assistant.";
+
+      final combinedSystemPrompt =
+          """
+      $basePrompt
+
+      You have access to the following internal medical procedure/protocol.
+      Use this content to answer the user's questions accurately.
+      If the answer is found in this text, cite the specific section or step.
+
+      --- BEGIN PROCEDURE: test ---
+      $procedureText
+      --- END PROCEDURE ---
+      """;
       _model = GenerativeModel(
         model: 'gemini-2.5-pro',
         apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
-        systemInstruction: Content.system(
-          dotenv.env['SYSTEM_PROMPT'] ?? "You are a helpful assistant.",
-        ),
+        systemInstruction: Content.system(combinedSystemPrompt),
       );
+
       _chat = _model.startChat();
-      _isModelInitialized = true;
+
+      if (mounted) {
+        setState(() {
+          _isModelInitialized = true;
+        });
+      }
+
+      debugPrint(
+        "Gemini initialized with context length: ${procedureText.length}",
+      );
     } catch (e) {
       debugPrint('Error initializing Gemini: $e');
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'content': "System Error: Failed to initialize AI. \n$e",
+          });
+        });
+      }
     }
   }
 
