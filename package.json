@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@google/genai": "^1.31.0",
+    "dotenv": "^17.2.3"
+  }
+}
