@@ -81,7 +81,9 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/icon/icon.png
-    - data/KZ.2.I15 Ekspozycja Zawodowa - zasady postępowania.txt
+    - data/KZ.2.I15_ekspozycja_zawodowa_zasady_postepowania.txt
+    - data/OP.2I1_postepowanie_z_pacjentem_szczegolnym_NN_bez_kontaktu_bez_adresu.txt
+    - data/OP.3_profilaktyka_i_leczenie_odlezyn.txt
     - .env
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg

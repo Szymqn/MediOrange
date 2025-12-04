@@ -31,16 +31,25 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
 
   Future<void> _initGemini() async {
     try {
-      String procedureText;
-      try {
-        procedureText = await rootBundle.loadString(
-          'data/KZ.2.I15 Ekspozycja Zawodowa - zasady postępowania.txt',
-        );
-      } catch (e) {
-        debugPrint(
-          "Warning: Procedure file not found. AI will run without it. Error: $e",
-        );
-        procedureText = "";
+      final List<String> filePaths = [
+        'data/KZ.2.I15_ekspozycja_zawodowa_zasady_postepowania.txt',
+        'data/OP.2I1_postepowanie_z_pacjentem_szczegolnym_NN_bez_kontaktu_bez_adresu.txt',
+        'data/OP.3_profilaktyka_i_leczenie_odlezyn.txt',
+      ];
+
+      StringBuffer allProceduresBuffer = StringBuffer();
+
+      for (String path in filePaths) {
+        try {
+          final String content = await rootBundle.loadString(path);
+          allProceduresBuffer.writeln("\n--- BEGIN PROCEDURE: $path ---");
+          allProceduresBuffer.writeln(content);
+          allProceduresBuffer.writeln("--- END PROCEDURE ---\n");
+        } catch (e) {
+          debugPrint(
+            "Warning: Procedure file not found: $path. AI will run without it. Error: $e",
+          );
+        }
       }
 
       final basePrompt =
@@ -50,14 +59,11 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
           """
       $basePrompt
 
-      You have access to the following internal medical procedure/protocol.
-      Use this content to answer the user's questions accurately.
-      If the answer is found in this text, cite the specific section or step.
-
-      --- BEGIN PROCEDURE: test ---
-      $procedureText
-      --- END PROCEDURE ---
+      ${allProceduresBuffer.toString()}
       """;
+
+      debugPrint("Combined System Prompt:\n $combinedSystemPrompt");
+
       _model = GenerativeModel(
         model: 'gemini-2.5-pro',
         apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
@@ -73,7 +79,7 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
       }
 
       debugPrint(
-        "Gemini initialized with context length: ${procedureText.length}",
+        "Gemini initialized with context length: ${allProceduresBuffer.length}",
       );
     } catch (e) {
       debugPrint('Error initializing Gemini: $e');
@@ -224,7 +230,19 @@ class _MedAssistHomePageState extends State<MedAssistHomePage> {
             const SizedBox(height: 16),
             _buildSuggestionCard(
               theme,
-              "Jak zmierzyć podstawowe parametry życiowe pacjenta?",
+              "Zgłosił się pacjent NN na Szpitalny Oddział Ratunkowy. Jakie są kroki postępowania z takim pacjentem?",
+              Icons.monitor_heart,
+            ),
+            const SizedBox(height: 16),
+            _buildSuggestionCard(
+              theme,
+              "Zakułam się igłą z krwią pacjenta. Co mam robić?",
+              Icons.monitor_heart,
+            ),
+            const SizedBox(height: 16),
+            _buildSuggestionCard(
+              theme,
+              "Zauważyłam odleżynę u pacjenta. Co mam robić?",
               Icons.monitor_heart,
             ),
           ],
